@@ -71,11 +71,23 @@ async function runRename(): Promise<void> {
 
   const label = KIND_LABEL[detection.kind];
   const dir = path.dirname(doc.fileName);
-  if (doc.isDirty && !(await doc.save())) {
-    vscode.window.showErrorMessage(
-      'tfrename: could not save the active file; aborting to avoid renaming stale content',
-    );
-    return;
+  // tfrename rewrites every *.tf in the directory, so any other open .tf
+  // document in the same directory must be flushed first. Otherwise VS Code
+  // detects the on-disk change and prompts to reload, putting the user at
+  // risk of losing unsaved edits or applying the rename to stale buffers.
+  const dirtyTfDocs = vscode.workspace.textDocuments.filter(
+    (d) =>
+      d.isDirty &&
+      path.extname(d.fileName) === '.tf' &&
+      path.dirname(d.fileName) === dir,
+  );
+  for (const d of dirtyTfDocs) {
+    if (!(await d.save())) {
+      vscode.window.showErrorMessage(
+        `tfrename: could not save ${path.basename(d.fileName)}; aborting to avoid renaming stale content`,
+      );
+      return;
+    }
   }
 
   try {
@@ -230,6 +242,12 @@ function detectFromDecl(line: string): Detection | null {
   return null;
 }
 
+// Built-in roots that look like resource references but are not renameable
+// (each.key/value, count.index, path.module/root/cwd, terraform.workspace,
+// self.* inside provisioners). Treating these as resources would just have
+// tfrename emit a confusing "no matches found" error.
+const BUILTIN_REF_ROOTS = new Set(['each', 'count', 'path', 'terraform', 'self']);
+
 function detectFromRef(token: string): Detection | null {
   if (!token) {
     return null;
@@ -241,19 +259,26 @@ function detectFromRef(token: string): Detection | null {
   if (!parts.every((p) => reIdent.test(p))) {
     return null;
   }
-  if (parts[0] === 'var') {
+  const root = parts[0];
+  if (root === 'var') {
     return { kind: 'variable', oldName: parts[1] };
   }
-  if (parts[0] === 'local') {
+  if (root === 'local') {
     return { kind: 'local', oldName: parts[1] };
   }
-  if (parts[0] === 'module') {
+  if (root === 'module') {
     return { kind: 'module', oldName: parts[1] };
   }
-  if (parts[0] === 'data' && parts.length >= 3) {
+  if (root === 'data') {
+    if (parts.length < 3) {
+      return null;
+    }
     return { kind: 'data', oldName: `${parts[1]}.${parts[2]}` };
   }
-  return { kind: 'resource', oldName: `${parts[0]}.${parts[1]}` };
+  if (BUILTIN_REF_ROOTS.has(root)) {
+    return null;
+  }
+  return { kind: 'resource', oldName: `${root}.${parts[1]}` };
 }
 
 // detectLocalDecl handles the cursor sitting on an attribute name inside a
