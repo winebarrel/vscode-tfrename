@@ -1,5 +1,8 @@
 # vscode-tfrename
 
+[![CI](https://github.com/winebarrel/vscode-tfrename/actions/workflows/ci.yml/badge.svg)](https://github.com/winebarrel/vscode-tfrename/actions/workflows/ci.yml)
+[![AI Generated](https://img.shields.io/badge/AI%20Generated-Claude-orange?logo=anthropic)](https://claude.ai/claude-code)
+
 A VS Code extension that renames Terraform resources, data sources, modules,
 variables, outputs, and locals across the current directory by driving the
 [`tfrename`](https://github.com/winebarrel/tfrename) CLI.
