@@ -58,34 +58,116 @@ async function runRename(): Promise<void> {
     return;
   }
 
-  const label = KIND_LABEL[detection.kind];
-  const newName = await vscode.window.showInputBox({
-    title: `Rename ${label}`,
-    prompt: `New name for ${label} ${detection.oldName}`,
-    value: detection.oldName,
-    valueSelection: selectionForRename(detection),
-    validateInput: (v) => validateNewName(detection.kind, v),
-  });
-  if (newName === undefined) {
+  const cfg = vscode.workspace.getConfiguration('tfrename');
+  const defaultMoved = cfg.get<boolean>('moved', false);
+  const result = await promptNewName(detection, defaultMoved);
+  if (result === undefined) {
     return;
   }
-  if (newName === detection.oldName) {
+  if (result.newName === detection.oldName) {
     vscode.window.showInformationMessage('tfrename: new name is the same as the old name');
     return;
   }
 
+  const label = KIND_LABEL[detection.kind];
   const dir = path.dirname(doc.fileName);
   await doc.save();
 
   try {
-    await runTfrename(detection.kind, detection.oldName, newName, dir);
+    await runTfrename(detection.kind, detection.oldName, result.newName, dir, result.moved);
   } catch (err) {
     vscode.window.showErrorMessage(`tfrename: ${formatError(err)}`);
     return;
   }
+  const suffix = result.moved ? ' (with moved block)' : '';
   vscode.window.showInformationMessage(
-    `tfrename: ${label} ${detection.oldName} -> ${newName}`,
+    `tfrename: ${label} ${detection.oldName} -> ${result.newName}${suffix}`,
   );
+}
+
+interface PromptResult {
+  newName: string;
+  moved: boolean;
+}
+
+// promptNewName shows an input box for the new symbol name. For resource and
+// module kinds, a button on the right of the input toggles whether tfrename
+// should insert a `moved {}` block. The current toggle state is reflected in
+// both the title bar and the button tooltip so it stays visible while typing.
+function promptNewName(detection: Detection, defaultMoved: boolean): Promise<PromptResult | undefined> {
+  const label = KIND_LABEL[detection.kind];
+  const supportsMoved = detection.kind === 'resource' || detection.kind === 'module';
+  let moved = supportsMoved && defaultMoved;
+
+  const input = vscode.window.createInputBox();
+  input.value = detection.oldName;
+  input.valueSelection = selectionForRename(detection);
+  input.prompt = `New name for ${label} ${detection.oldName}`;
+  input.ignoreFocusOut = true;
+
+  // QuickInputButton fields are read-only, so the button is recreated on every
+  // refresh. Identity is checked in onDidTriggerButton by the iconPath value.
+  const movedIcon = new vscode.ThemeIcon('arrow-swap');
+  const refresh = () => {
+    const movedLabel = moved ? 'ON' : 'OFF';
+    input.title = supportsMoved
+      ? `Rename ${label}  -  moved block: ${movedLabel}`
+      : `Rename ${label}`;
+    if (supportsMoved) {
+      input.buttons = [
+        {
+          iconPath: movedIcon,
+          tooltip: `moved block: ${movedLabel} (click to toggle)`,
+        },
+      ];
+    }
+  };
+  refresh();
+
+  const updateValidation = () => {
+    const err = validateNewName(detection.kind, input.value);
+    input.validationMessage = err ?? undefined;
+  };
+  updateValidation();
+
+  return new Promise<PromptResult | undefined>((resolve) => {
+    const disposables: vscode.Disposable[] = [];
+    let settled = false;
+    const finish = (value: PromptResult | undefined) => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      resolve(value);
+      input.hide();
+    };
+
+    disposables.push(
+      input.onDidChangeValue(() => updateValidation()),
+      input.onDidTriggerButton((b) => {
+        if (b.iconPath === movedIcon) {
+          moved = !moved;
+          refresh();
+        }
+      }),
+      input.onDidAccept(() => {
+        if (validateNewName(detection.kind, input.value)) {
+          updateValidation();
+          return;
+        }
+        finish({ newName: input.value.trim(), moved: supportsMoved && moved });
+      }),
+      input.onDidHide(() => {
+        finish(undefined);
+        for (const d of disposables) {
+          d.dispose();
+        }
+        input.dispose();
+      }),
+    );
+
+    input.show();
+  });
 }
 
 function detect(doc: vscode.TextDocument, sel: vscode.Selection): Detection | null {
@@ -265,12 +347,12 @@ function runTfrename(
   oldName: string,
   newName: string,
   dir: string,
+  moved: boolean,
 ): Promise<void> {
   const cfg = vscode.workspace.getConfiguration('tfrename');
   const bin = cfg.get<string>('executable', 'tfrename');
-  const moved = cfg.get<boolean>('moved', false);
 
-  const args: string[] = [kind, oldName, newName.trim(), '-C', dir, '-i'];
+  const args: string[] = [kind, oldName, newName, '-C', dir, '-i'];
   if (moved && (kind === 'resource' || kind === 'module')) {
     args.push('--moved');
   }

@@ -59,7 +59,7 @@
         "tfrename.moved": {
           "type": "boolean",
           "default": false,
-          "description": "Insert a moved {} block when renaming a resource or module."
+          "description": "Default toggle state for the moved {} block on resource and module renames. The toggle is shown as a button on the right side of the rename input box."
         }
       }
     }

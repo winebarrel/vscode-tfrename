@@ -48,12 +48,23 @@ For resources and data sources, the new name must also be in `TYPE.NAME` form,
 which lets you change the type at the same time (e.g. `aws_instance.web` ->
 `aws_db_instance.web`).
 
+## `moved {}` block
+
+When renaming a resource or module, the input box shows a toggle button on
+the right. Click it to switch `moved block: ON` / `OFF`; the title bar
+reflects the current state. With `ON`, `tfrename` is invoked with `--moved`,
+which inserts a `moved {}` block so Terraform treats the rename as a state
+move instead of destroy+create.
+
+The default state of the toggle comes from the `tfrename.moved` setting.
+Other kinds do not show the button.
+
 ## Settings
 
-| Key                   | Default     | Description                                                     |
-| --------------------- | ----------- | --------------------------------------------------------------- |
-| `tfrename.executable` | `tfrename`  | Path to the tfrename binary. Looked up via PATH if not absolute. |
-| `tfrename.moved`      | `false`     | Insert a `moved {}` block when renaming a resource or module.   |
+| Key                   | Default     | Description                                                              |
+| --------------------- | ----------- | ------------------------------------------------------------------------ |
+| `tfrename.executable` | `tfrename`  | Path to the tfrename binary. Looked up via PATH if not absolute.         |
+| `tfrename.moved`      | `false`     | Default toggle state for the `moved {}` block on resource / module renames. |
 
 ## Notes
 
