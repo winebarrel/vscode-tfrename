@@ -71,7 +71,12 @@ async function runRename(): Promise<void> {
 
   const label = KIND_LABEL[detection.kind];
   const dir = path.dirname(doc.fileName);
-  await doc.save();
+  if (doc.isDirty && !(await doc.save())) {
+    vscode.window.showErrorMessage(
+      'tfrename: could not save the active file; aborting to avoid renaming stale content',
+    );
+    return;
+  }
 
   try {
     await runTfrename(detection.kind, detection.oldName, result.newName, dir, result.moved);
