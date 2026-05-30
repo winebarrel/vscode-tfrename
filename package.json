@@ -10,7 +10,8 @@
     "url": "https://github.com/winebarrel/vscode-tfrename.git"
   },
   "engines": {
-    "vscode": "^1.85.0"
+    "vscode": "^1.85.0",
+    "node": ">=20.19.0"
   },
   "categories": [
     "Other"
