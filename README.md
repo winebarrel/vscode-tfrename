@@ -4,6 +4,10 @@ A VS Code extension that renames Terraform resources, data sources, modules,
 variables, outputs, and locals across the current directory by driving the
 [`tfrename`](https://github.com/winebarrel/tfrename) CLI.
 
+![](https://github.com/user-attachments/assets/b9ecd6dd-395f-4aeb-9d4a-4bfbfed0d7f2)
+![](https://github.com/user-attachments/assets/63e63bbc-b147-4c64-b31f-7d0f925488f1)
+
+
 ## Requirements
 
 `tfrename` must be installed and on your `PATH`:
