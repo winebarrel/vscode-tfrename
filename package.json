@@ -1,0 +1,84 @@
+{
+  "name": "vscode-tfrename",
+  "displayName": "tfrename",
+  "description": "Rename Terraform resources, data sources, modules, variables, outputs, and locals via the tfrename CLI.",
+  "version": "0.0.1",
+  "publisher": "winebarrel",
+  "license": "CC0-1.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/winebarrel/vscode-tfrename.git"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "terraform",
+    "tf",
+    "rename",
+    "refactor"
+  ],
+  "activationEvents": [
+    "onLanguage:terraform",
+    "onLanguage:terraform-vars"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "tfrename.rename",
+        "title": "tfrename: Rename Terraform Symbol"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "when": "resourceExtname == .tf",
+          "command": "tfrename.rename",
+          "group": "1_modification@10"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "tfrename.rename",
+          "when": "resourceExtname == .tf"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "tfrename",
+      "properties": {
+        "tfrename.executable": {
+          "type": "string",
+          "default": "tfrename",
+          "description": "Path to the tfrename binary. Looked up via PATH if not absolute."
+        },
+        "tfrename.moved": {
+          "type": "boolean",
+          "default": false,
+          "description": "Default toggle state for the moved {} block on resource and module renames. The toggle is shown as a button on the right side of the rename input box."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^20.11.0",
+    "@types/vscode": "~1.85.0",
+    "@vscode/vsce": "^2.24.0",
+    "eslint": "^10.4.1",
+    "typescript": "^5.4.0",
+    "typescript-eslint": "^8.60.0"
+  }
+}
