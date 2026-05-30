@@ -68,12 +68,17 @@
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
     "package": "vsce package"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/node": "^20.11.0",
     "@types/vscode": "^1.85.0",
     "@vscode/vsce": "^2.24.0",
-    "typescript": "^5.4.0"
+    "eslint": "^10.4.1",
+    "typescript": "^5.4.0",
+    "typescript-eslint": "^8.60.0"
   }
 }

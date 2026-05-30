@@ -292,7 +292,7 @@ function detectLocalDecl(
 }
 
 function tokenAt(line: string, col: number): string {
-  const isTok = (c: string) => /[A-Za-z0-9_.\-]/.test(c);
+  const isTok = (c: string) => /[A-Za-z0-9_.-]/.test(c);
   let s = col;
   let e = col;
   while (s > 0 && isTok(line[s - 1])) {
