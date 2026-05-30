@@ -2,7 +2,7 @@
   "name": "vscode-tfrename",
   "displayName": "tfrename",
   "description": "Rename Terraform resources, data sources, modules, variables, outputs, and locals via the tfrename CLI.",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "publisher": "winebarrel",
   "license": "CC0-1.0",
   "repository": {
