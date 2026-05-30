@@ -6,5 +6,12 @@
   ],
   "vulnerabilityAlerts": {
     "enabled": true
-  }
+  },
+  "packageRules": [
+    {
+      "matchPackageNames": ["@types/vscode"],
+      "enabled": false,
+      "description": "Pin @types/vscode to engines.vscode. vsce package fails when @types/vscode exceeds engines.vscode, so this dependency is bumped manually together with engines.vscode."
+    }
+  ]
 }
